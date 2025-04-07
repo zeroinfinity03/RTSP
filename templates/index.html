@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock Price Prediction</title>
+    <!-- Add jQuery before other scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/data.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/drag-panes.js"></script>
+    <script src="https://code.highcharts.com/highcharts-more.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/stock/themes/dark-unica.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        /* Dark theme for Select2 */
+        .select2-container--default .select2-selection--single {
+            background-color: #1f2937 !important;
+            border-color: #4b5563 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #fff !important;
+        }
+        .select2-dropdown {
+            background-color: #1f2937 !important;
+            border-color: #4b5563 !important;
+        }
+        .select2-search__field {
+            background-color: #374151 !important;
+            color: #fff !important;
+        }
+        .select2-results__option {
+            color: #fff !important;
+        }
+        .select2-results__option--highlighted {
+            background-color: #3b82f6 !important;
+        }
+        .select2-container--default .select2-results__option--selected {
+            background-color: #2563eb !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border-color: #fff transparent transparent transparent !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white p-4">
+    <div class="container mx-auto">
+        <div class="flex gap-4 mb-4">
+            <select id="stockSelect" class="flex-1 p-2 border rounded bg-gray-800 text-white">
+                {% if symbols %}
+                    {% for symbol in symbols %}
+                    <option value="{{ symbol }}">{{ symbol }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="">Loading symbols...</option>
+                {% endif %}
+            </select>
+            <select id="timeSelect" class="p-2 border rounded bg-gray-800 text-white">
+                <option value="1w">1 Week</option>
+                <option value="1mo" selected>1 Month</option>
+                <option value="3mo">3 Months</option>
+                <option value="6mo">6 Months</option>
+            </select>
+        </div>
+        
+        <!-- Stock details section -->
+        <div id="stockDetails" class="bg-gray-800 p-4 rounded shadow-lg mb-4">
+            <h2 class="text-2xl font-bold mb-2">Stock Details</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <p class="font-semibold">Company Name:</p>
+                    <p id="companyName">-</p>
+                </div>
+                <div>
+                    <p class="font-semibold">Current Price:</p>
+                    <p id="currentPrice">-</p>
+                </div>
+                <div>
+                    <p class="font-semibold">Volume:</p>
+                    <p id="volume">-</p>
+                </div>
+                <div>
+                    <p class="font-semibold">Avg Volume:</p>
+                    <p id="avgVolume">-</p>
+                </div>
+                <div>
+                    <p class="font-semibold">52 Week High:</p>
+                    <p id="high52">-</p>
+                </div>
+                <div>
+                    <p class="font-semibold">52 Week Low:</p>
+                    <p id="low52">-</p>
+                </div>
+                <div>
+                    <p class="font-semibold">Market Cap:</p>
+                    <p id="marketCap">-</p>
+                </div>
+                <div>
+                    <p class="font-semibold">P/E Ratio:</p>
+                    <p id="peRatio">-</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chart containers -->
+        <div class="grid grid-cols-1 gap-4">
+            <!-- Historical Chart -->
+            <div id="historical-chart" class="bg-gray-800 p-4 rounded shadow-lg h-[400px]"></div>
+            
+            <!-- Prediction Chart -->
+            <div id="prediction-chart" class="bg-gray-800 p-4 rounded shadow-lg h-[400px]"></div>
+            
+            <!-- Sentiment Analysis Chart with News -->
+            <div class="bg-gray-800 p-4 rounded shadow-lg">
+                <div id="sentiment-chart" class="h-[400px] mb-4"></div>
+                
+                <!-- Sentiment Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div class="bg-gray-700 p-4 rounded">
+                        <h3 class="text-lg font-semibold mb-2">Overall Market Sentiment</h3>
+                        <p class="font-semibold">Sentiment:</p>
+                        <p id="overallSentiment" class="text-lg">-</p>
+                        <p class="font-semibold mt-2">Score:</p>
+                        <p id="sentimentScore" class="text-lg">-</p>
+                    </div>
+                    <div class="bg-gray-700 p-4 rounded">
+                        <h3 class="text-lg font-semibold mb-2">Latest News</h3>
+                        <div id="latestNewsSentiment" class="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                            <!-- News items will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', path='js/chart-config.js') }}"></script>
+    <script src="/static/app.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#stockSelect').select2({
+                placeholder: 'Search for a stock...',
+                allowClear: true,
+                theme: 'default',
+                width: '100%',
+                dropdownParent: $('body')
+            });
+        });
+    </script>
+</body>
+</html>

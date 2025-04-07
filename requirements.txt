@@ -1,0 +1,16 @@
+fastapi
+python-dotenv
+jinja2
+uvicorn
+plotly
+prophet
+cmdstanpy
+transformers
+torch
+requests
+yfinance
+cachetools
+polars
+httpx
+lxml
+polars
