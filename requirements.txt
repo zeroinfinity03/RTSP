@@ -5,7 +5,7 @@ uvicorn
 plotly
 prophet
 cmdstanpy
-transformers
+transformers==4.36.0
 torch
 requests
 yfinance
@@ -13,4 +13,3 @@ cachetools
 polars
 httpx
 lxml
-polars

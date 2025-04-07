@@ -11,6 +11,83 @@ A comprehensive stock market analysis platform that combines real-time stock dat
 - **Interactive UI**: Dynamic charts and real-time updates using Highcharts
 - **News Integration**: Latest financial news aggregation using Tavily API
 
+### Chart System Explanation
+
+The platform features three interconnected charts that work together to provide comprehensive stock analysis:
+
+1. **Historical Chart (Top)**
+   - Displays candlestick patterns for historical price data
+   - Shows volume indicators
+   - Interactive navigator for time period selection
+   - Supports different time ranges (1W, 1M, 3M, 6M)
+
+2. **Price Prediction Chart (Middle)**
+   - Shows future price predictions using Prophet model
+   - Includes sentiment-enhanced predictions and corrects itself
+   - Displays confidence intervals (upper and lower bounds)
+   - Prediction periods match selected timeframe (1W to 6M)
+   - Uses both historical price patterns and sentiment analysis for predictions
+
+3. **Sentiment Analysis Chart (Bottom)**
+   - Displays historical sentiment trends from news analysis
+   - Shows actual sentiment scores from analyzed news articles
+   - Interactive: Click points to view detailed news information
+   - Explains the sentiment input used in price predictions
+   - Color-coded sentiment visualization:
+     * Green (≥0.6): Positive sentiment
+     * Yellow (0.4-0.6): Neutral sentiment
+     * Red (≤0.4): Negative sentiment
+
+#### How the Charts Work Together
+
+1. **Data Flow**:
+   - Historical data feeds into the Prophet model
+   - Sentiment analysis from news articles acts as a regressor
+   - The most recent sentiment score influences future predictions
+
+2. **Prediction Integration**:
+   - Prophet model uses 2 years of historical data
+   - Incorporates sentiment as an additional predictor
+   - Uses the latest sentiment score for future predictions
+   - Generates confidence intervals based on historical volatility
+
+3. **Sentiment Analysis Process**:
+   - News articles are analyzed using FinBERT
+   - Title sentiment (40%) and content sentiment (60%) are weighted
+   - Combined sentiment score influences prediction trajectory
+   - Historical sentiment shown for transparency and analysis
+
+#### Technical Implementation
+
+- **Prophet Model Configuration**:
+  ```python
+  model = Prophet(
+      daily_seasonality=True,
+      weekly_seasonality=True,
+      yearly_seasonality=True,
+      changepoint_prior_scale=0.05
+  )
+  model.add_regressor('sentiment')  # Sentiment integration
+  ```
+
+- **Sentiment Scoring**:
+  - Range: 0.0 to 1.0
+  - Negative: ≤ 0.4
+  - Neutral: 0.4 - 0.6
+  - Positive: ≥ 0.6
+
+- **Data Update Frequency**:
+  - Historical data: Every 6 hours
+  - Predictions: Daily
+  - News sentiment: Real-time with caching
+
+### Note on Sentiment Visualization
+
+The sentiment chart shows only historical sentiment from actual news articles, rather than predicted future sentiment, because:
+1. Future news sentiment cannot be reliably predicted
+2. The prediction model uses the most recent sentiment score as a constant for future predictions
+3. This provides transparency in the prediction process by showing the actual news data influencing the predictions
+
 ## Tech Stack
 
 - **Backend**: FastAPI, Python 3.13
@@ -139,4 +216,7 @@ Alternative commands:
 - [Tavily API](https://tavily.com/)
 - [yfinance](https://github.com/ranaroussi/yfinance)
 - [Highcharts](https://www.highcharts.com/)
+
+
+
 
